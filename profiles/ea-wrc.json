@@ -1,0 +1,21 @@
+{
+    "svg": "ea-wrc.svg",
+    "defaults": {
+        "Title": "Title",
+        "Description": "Description"
+    },
+    "upload": {
+        "title": "{{.Title}}",
+        "description": "{{.Description}}\nHN: NoboNobo - loves action & rally games\nPC: CPU Ryzen 7 5700X / GPU RTX 4060 8GB",
+        "categoryId": "20",
+        "privacyStatus": "private",
+        "embeddable": true,
+        "license": "youtube",
+        "madeForKids": false,
+        "containsSyntheticMedia": false,
+        "playlistIds": [
+            "PLNhVzDfOlkDhEHJyp0VwUsYKZjyGDrj_i"
+        ],
+        "language": "en"
+    }
+}
