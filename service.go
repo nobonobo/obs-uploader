@@ -95,7 +95,7 @@ func (s *AppService) Upload(id string, data map[string]any) {
 	log.Printf("Upload called with data: %+v\n", data)
 	args := []string{"-t", templatePath, info.OutputPath}
 	for k, v := range data {
-		args = append(args, fmt.Sprintf("%s=%q", k, v))
+		args = append(args, fmt.Sprintf(`%s=%q`, k, v))
 	}
 	cmd := exec.Command("thumb-tool",
 		args...,
