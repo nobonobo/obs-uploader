@@ -97,7 +97,6 @@ func (c *Core) Run(ctx context.Context) error {
 		}
 	}()
 	var currentProcess *Process
-	var currentProfile *Profile
 	client.Listen(func(event any) {
 		switch e := event.(type) {
 		case *events.ScreenshotSaved:
@@ -107,18 +106,6 @@ func (c *Core) Run(ctx context.Context) error {
 				break
 			}
 			//log.Printf("record state changed: %v\n", e)
-			prof, ok := config.Profiles[currentProcess.Name]
-			if !ok {
-				prof = new(Profile)
-				*prof = *config.Profiles["default"]
-				prof.Name = currentProcess.Name
-				for _, v := range prof.Fields {
-					if v.ID == "Title" {
-						v.Default = currentProcess.Name
-					}
-				}
-			}
-			currentProfile = prof
 			state := states[currentProcess.Name]
 			switch e.OutputState {
 			case "OBS_WEBSOCKET_OUTPUT_STARTED":
@@ -129,13 +116,33 @@ func (c *Core) Run(ctx context.Context) error {
 				if state.OutputPath != e.OutputPath {
 					break
 				}
+				prof, ok := config.Profiles[currentProcess.Name]
+				if !ok {
+					defaultProf, ok := config.Profiles["default"]
+					prof = new(Profile)
+					if ok {
+						log.Println(defaultProf)
+						prof.Name = "default"
+						prof.MinDuration = defaultProf.MinDuration
+						prof.Template = defaultProf.Template
+						for _, v := range defaultProf.Fields {
+							prof.Fields = append(prof.Fields, v)
+						}
+					}
+					prof.Name = currentProcess.Name
+					for _, v := range prof.Fields {
+						if v.ID == "Title" {
+							v.Default = currentProcess.Name
+						}
+					}
+				}
 				duration := time.Since(state.Start)
-				log.Println("record stopped:", e.OutputPath, "duration:", duration, currentProfile)
-				if duration < time.Duration(currentProfile.MinDuration*float64(time.Second)) {
+				log.Println("record stopped:", e.OutputPath, "duration:", duration, prof)
+				if duration < time.Duration(prof.MinDuration*float64(time.Second)) {
 					log.Println("record duration is less than min duration, skipping upload")
 					break
 				}
-				if err := c.OpenWindow(currentProfile, e.OutputPath); err != nil {
+				if err := c.OpenWindow(prof, e.OutputPath); err != nil {
 					log.Println(err)
 				}
 			}

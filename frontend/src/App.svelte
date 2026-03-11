@@ -16,6 +16,7 @@
   onMount(async () => {
     try {
       info = await GetInfo(id);
+      console.log(info);
       fields = info.fields;
       // Initialize formData with default values
       for (const field of fields) {

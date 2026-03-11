@@ -34,7 +34,6 @@ type AppService struct {
 }
 
 func (s *AppService) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
-	log.Println("OnStartup")
 	if err := LoadConfig(); err != nil {
 		app := application.Get()
 		time.Sleep(500 * time.Millisecond)
