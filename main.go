@@ -22,18 +22,6 @@ func main() {
 	core := New()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	go func() {
-		defer log.Println("terminated")
-		for {
-			if err := core.Run(ctx); err != nil {
-				log.Println(err)
-			}
-			if ctx.Err() != nil {
-				break
-			}
-			time.Sleep(5 * time.Second)
-		}
-	}()
 
 	app := application.New(application.Options{
 		Name:        "obs-recorder",
@@ -52,6 +40,19 @@ func main() {
 		URL:    "dummy.html",
 		Hidden: true,
 	})
+
+	go func() {
+		defer log.Println("terminated")
+		for {
+			if err := core.Run(ctx); err != nil {
+				log.Println(err)
+			}
+			if ctx.Err() != nil {
+				break
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
 
 	trayMenu := app.NewMenu()
 	trayMenu.Add("Quit").OnClick(func(ctx *application.Context) {

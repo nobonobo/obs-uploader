@@ -1,11 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -25,6 +31,18 @@ type Window struct {
 type AppService struct {
 	mu      sync.RWMutex
 	windows map[string]*Window
+}
+
+func (s *AppService) ServiceStartup(ctx context.Context, options application.ServiceOptions) error {
+	log.Println("OnStartup")
+	if err := LoadConfig(); err != nil {
+		app := application.Get()
+		time.Sleep(500 * time.Millisecond)
+		errDialog := app.Dialog.Error().SetTitle("Configuration Error").SetMessage(err.Error())
+		errDialog.Show()
+		os.Exit(1)
+	}
+	return nil
 }
 
 // SetWindow allows passing the main application window so the service can interact with it
@@ -73,18 +91,24 @@ func (s *AppService) Upload(id string, data map[string]any) {
 			template = prof.Template
 		}
 	}
+	templatePath := filepath.Join(config.ProfileDir, template)
 	log.Printf("Upload called with data: %+v\n", data)
-	args := []string{"-t", template, info.OutputPath}
+	args := []string{"-t", templatePath, info.OutputPath}
 	for k, v := range data {
-		args = append(args, fmt.Sprintf("%s=%v", k, v))
+		args = append(args, fmt.Sprintf("%s=%q", k, v))
 	}
 	cmd := exec.Command("thumb-tool",
 		args...,
 	)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		panic(err)
+	if runtime.GOOS == "windows" {
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	}
+	if output, err := cmd.CombinedOutput(); err != nil {
+		msg := fmt.Sprintf("Error: %s\n\n%s", err.Error(), strings.TrimSpace(string(output)))
+		app := application.Get()
+		errDialog := app.Dialog.Error().SetTitle("Upload Failed").SetMessage(msg)
+		errDialog.Show()
+		return
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()

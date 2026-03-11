@@ -112,6 +112,11 @@ func (c *Core) Run(ctx context.Context) error {
 				prof = new(Profile)
 				*prof = *config.Profiles["default"]
 				prof.Name = currentProcess.Name
+				for _, v := range prof.Fields {
+					if v.ID == "Title" {
+						v.Default = currentProcess.Name
+					}
+				}
 			}
 			currentProfile = prof
 			state := states[currentProcess.Name]

@@ -11,6 +11,7 @@
   let info = {};
   let fields = [];
   let formData = {};
+  let submitting = false;
 
   onMount(async () => {
     try {
@@ -26,10 +27,13 @@
   });
 
   const handleUpload = async () => {
+    if (submitting) return;
+    submitting = true;
     try {
       await Upload(id, formData);
     } catch (err) {
       console.error("Upload failed:", err);
+      submitting = false;
     }
   };
 
@@ -58,6 +62,7 @@
             id="outputPath"
             type="text"
             readonly
+            disabled={submitting}
             value={info.outputPath}
             class="opacity-70 cursor-not-allowed"
           />
@@ -68,12 +73,17 @@
             <label for={field.id}>{field.name}</label>
 
             {#if field.type === "textarea"}
-              <textarea id={field.id} bind:value={formData[field.id]} rows="4"
+              <textarea
+                id={field.id}
+                bind:value={formData[field.id]}
+                rows="4"
+                disabled={submitting}
               ></textarea>
             {:else if field.type === "number"}
               <input
                 id={field.id}
                 type="number"
+                disabled={submitting}
                 bind:value={formData[field.id]}
               />
             {:else}
@@ -81,6 +91,7 @@
               <input
                 id={field.id}
                 type="text"
+                disabled={submitting}
                 bind:value={formData[field.id]}
               />
             {/if}
@@ -88,12 +99,22 @@
         {/each}
 
         <div class="actions">
-          <button type="submit" class="btn preset-filled-primary-500"
-            >Upload</button
+          <button
+            type="submit"
+            class="btn preset-filled-primary-500"
+            disabled={submitting}
           >
+            {#if submitting}
+              <span class="spinner"></span>
+              Uploading...
+            {:else}
+              Upload
+            {/if}
+          </button>
           <button
             type="button"
             class="btn preset-filled-surface-500"
+            disabled={submitting}
             on:click={handleCancel}>Cancel</button
           >
         </div>
@@ -149,5 +170,22 @@
     justify-content: flex-end;
     gap: 1rem;
     margin-top: 1rem;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+    margin-right: 0.5rem;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 </style>
