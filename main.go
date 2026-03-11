@@ -19,10 +19,10 @@ func init() {
 }
 
 func main() {
-	core := New()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
+	core := New()
 	app := application.New(application.Options{
 		Name:        "obs-recorder",
 		Description: "A demo of using raw HTML & CSS",
@@ -60,6 +60,7 @@ func main() {
 	})
 	systemTray := app.SystemTray.New()
 	systemTray.SetMenu(trayMenu)
+	core.SetTray(systemTray)
 
 	// Start the application
 	if err := app.Run(); err != nil {

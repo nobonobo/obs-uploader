@@ -8,6 +8,7 @@ import (
 
 	"github.com/andreykaipov/goobs"
 	"github.com/andreykaipov/goobs/api/events"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type AppDetection struct {
@@ -18,10 +19,19 @@ type AppDetection struct {
 type Core struct {
 	service *AppService
 	index   int
+	tray    *application.SystemTray
 }
 
 func New() *Core {
-	return &Core{service: &AppService{windows: map[string]*Window{}}}
+	return &Core{
+		service: &AppService{windows: map[string]*Window{}},
+	}
+}
+
+func (c *Core) SetTray(tray *application.SystemTray) {
+	c.tray = tray
+	c.tray.SetIcon(trayIcons["light"])
+	c.tray.SetDarkModeIcon(trayIcons["dark"])
 }
 
 func (c *Core) Service() *AppService {
@@ -112,6 +122,8 @@ func (c *Core) Run(ctx context.Context) error {
 				state.OutputPath = e.OutputPath
 				state.Start = time.Now()
 				log.Println("record started:", e.OutputPath)
+				c.tray.SetIcon(trayIcons["record"])
+				c.tray.SetDarkModeIcon(trayIcons["record"])
 			case "OBS_WEBSOCKET_OUTPUT_STOPPED":
 				if state.OutputPath != e.OutputPath {
 					break
@@ -138,6 +150,8 @@ func (c *Core) Run(ctx context.Context) error {
 				}
 				duration := time.Since(state.Start)
 				log.Println("record stopped:", e.OutputPath, "duration:", duration, prof)
+				c.tray.SetIcon(trayIcons["light"])
+				c.tray.SetDarkModeIcon(trayIcons["dark"])
 				if duration < time.Duration(prof.MinDuration*float64(time.Second)) {
 					log.Println("record duration is less than min duration, skipping upload")
 					break
