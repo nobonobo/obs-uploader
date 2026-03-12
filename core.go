@@ -67,6 +67,12 @@ func (c *Core) Run(ctx context.Context) error {
 				client.Disconnect()
 				return
 			case <-ticker.C:
+				_, err := client.General.GetStats(nil)
+				if err != nil {
+					slog.Error("failed to get stats", "error", err)
+					client.Disconnect()
+					return
+				}
 				var app *Process
 				if lastDetected == nil {
 					a, err := GetFullscreenApp()
@@ -176,7 +182,7 @@ func (c *Core) Run(ctx context.Context) error {
 			slog.Debug("unhandled event", "type", fmt.Sprintf("%T", event))
 		}
 	})
-	return nil
+	return fmt.Errorf("connection closed")
 }
 
 func (c *Core) OpenWindow(profile *Profile, output string) error {

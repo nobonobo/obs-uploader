@@ -46,12 +46,13 @@ func main() {
 			if ctx.Err() != nil {
 				break
 			}
-			time.Sleep(5 * time.Second)
+			time.Sleep(10 * time.Second)
 		}
 	}()
 
 	trayMenu := app.NewMenu()
 	trayMenu.Add("Quit").OnClick(func(ctx *application.Context) {
+		slog.Info("Quit clicked")
 		app.Quit()
 	})
 	systemTray := app.SystemTray.New()
