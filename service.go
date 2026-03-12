@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -91,7 +91,7 @@ func (s *AppService) Upload(id string, data map[string]any) {
 		}
 	}
 	templatePath := filepath.Join(config.ProfileDir, template)
-	log.Printf("Upload called with data: %+v\n", data)
+	slog.Info("Upload called", "data", data)
 	args := []string{"-t", templatePath, info.OutputPath}
 	for k, v := range data {
 		args = append(args, fmt.Sprintf(`%s=%q`, k, v))
@@ -119,7 +119,7 @@ func (s *AppService) Upload(id string, data map[string]any) {
 
 // Cancel closes the window entirely instead of uploading.
 func (s *AppService) Cancel(id string) {
-	log.Println("Cancel called")
+	slog.Info("Cancel called")
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.windows[id].window != nil {
@@ -127,3 +127,4 @@ func (s *AppService) Cancel(id string) {
 	}
 	delete(s.windows, id)
 }
+

@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"embed"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"time"
@@ -14,14 +14,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-func init() {
-	application.RegisterEvent[string]("time")
-}
-
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-
 	core := New()
 	app := application.New(application.Options{
 		Name:        "obs-recorder",
@@ -35,6 +30,7 @@ func main() {
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
+		Logger: config.Logger,
 	})
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		URL:    "dummy.html",
@@ -42,10 +38,10 @@ func main() {
 	})
 
 	go func() {
-		defer log.Println("terminated")
+		defer slog.Info("terminated")
 		for {
 			if err := core.Run(ctx); err != nil {
-				log.Println(err)
+				slog.Error("core.Run", "error", err)
 			}
 			if ctx.Err() != nil {
 				break
@@ -64,6 +60,7 @@ func main() {
 
 	// Start the application
 	if err := app.Run(); err != nil {
-		log.Fatal(err)
+		slog.Error("app.Run", "error", err)
+		os.Exit(1)
 	}
 }

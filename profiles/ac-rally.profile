@@ -1,7 +1,7 @@
 {
     "name": "acr.exe",
     "template": "ac-rally.json",
-    "min-duration": 30.0,
+    "min-duration": 180.0,
     "fields": [
         {
             "id": "Title",

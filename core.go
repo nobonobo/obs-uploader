@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -54,8 +55,8 @@ func (c *Core) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Connected to OBS Version:", version.ObsVersion)
-	defer log.Println("Disconnected from OBS")
+	slog.Info("Connected to OBS", "version", version.ObsVersion)
+	defer slog.Info("Disconnected from OBS")
 
 	go func() {
 		var lastDetected *Process
@@ -76,7 +77,7 @@ func (c *Core) Run(ctx context.Context) error {
 					}
 				} else {
 					if ok, err := lastDetected.IsProcessExited(); err != nil {
-						log.Println(err)
+						slog.Error("check process exit failed", "error", err)
 					} else if ok {
 						app = nil
 					} else {
@@ -110,7 +111,7 @@ func (c *Core) Run(ctx context.Context) error {
 	client.Listen(func(event any) {
 		switch e := event.(type) {
 		case *events.ScreenshotSaved:
-			log.Printf("screenshot saved: %v\n", e)
+			slog.Debug("screenshot saved", "event", e)
 		case *events.RecordStateChanged:
 			if currentProcess == nil {
 				break
@@ -121,10 +122,14 @@ func (c *Core) Run(ctx context.Context) error {
 			case "OBS_WEBSOCKET_OUTPUT_STARTED":
 				state.OutputPath = e.OutputPath
 				state.Start = time.Now()
-				log.Println("record started:", e.OutputPath)
+				slog.Info("record started", "path", e.OutputPath)
 				c.tray.SetIcon(trayIcons["record"])
 				c.tray.SetDarkModeIcon(trayIcons["record"])
 			case "OBS_WEBSOCKET_OUTPUT_STOPPED":
+				duration := time.Since(state.Start)
+				slog.Info("record stopped", "path", e.OutputPath, "duration", duration)
+				c.tray.SetIcon(trayIcons["light"])
+				c.tray.SetDarkModeIcon(trayIcons["dark"])
 				if state.OutputPath != e.OutputPath {
 					break
 				}
@@ -133,7 +138,7 @@ func (c *Core) Run(ctx context.Context) error {
 					defaultProf, ok := config.Profiles["default"]
 					prof = new(Profile)
 					if ok {
-						log.Println(defaultProf)
+						slog.Debug("using default profile", "profile", defaultProf)
 						prof.Name = "default"
 						prof.MinDuration = defaultProf.MinDuration
 						prof.Template = defaultProf.Template
@@ -148,31 +153,27 @@ func (c *Core) Run(ctx context.Context) error {
 						}
 					}
 				}
-				duration := time.Since(state.Start)
-				log.Println("record stopped:", e.OutputPath, "duration:", duration, prof)
-				c.tray.SetIcon(trayIcons["light"])
-				c.tray.SetDarkModeIcon(trayIcons["dark"])
 				if duration < time.Duration(prof.MinDuration*float64(time.Second)) {
-					log.Println("record duration is less than min duration, skipping upload")
+					slog.Info("record duration is less than min duration, skipping upload", "duration", duration, "min", prof.MinDuration)
 					break
 				}
 				if err := c.OpenWindow(prof, e.OutputPath); err != nil {
-					log.Println(err)
+					slog.Error("failed to open window", "error", err)
 				}
 			}
 			states[currentProcess.Name] = state
 		case *AppDetection:
 			if e.Detected {
-				log.Printf("detected app: %v\n", e.Process.Name)
+				slog.Info("detected app", "name", e.Process.Name)
 				currentProcess = e.Process
 			} else {
-				log.Printf("terminated app: %v\n", e.Process.Name)
-				currentProcess = nil
+				slog.Info("terminated app", "name", e.Process.Name)
+				//currentProcess = nil
 			}
 		case *events.ExitStarted:
-			log.Printf("Exit: %#v", e)
+			slog.Info("Exit", "event", e)
 		default:
-			log.Printf("unhandled: %T\n", event)
+			slog.Debug("unhandled event", "type", fmt.Sprintf("%T", event))
 		}
 	})
 	return nil
@@ -180,7 +181,7 @@ func (c *Core) Run(ctx context.Context) error {
 
 func (c *Core) OpenWindow(profile *Profile, output string) error {
 	c.index++
-	log.Println("opening window:", c.index, profile, output)
+	slog.Info("opening window", "index", c.index, "profile", profile.Name, "output", output)
 	c.service.openWindow(strconv.Itoa(c.index), *profile, output)
 	return nil
 }
