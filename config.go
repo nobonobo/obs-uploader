@@ -57,7 +57,7 @@ func init() {
 		slog.Error("failed to create cache dir", "error", err)
 		os.Exit(1)
 	}
-	f, err := os.OpenFile("app.log",
+	f, err := os.OpenFile(filepath.Join(cache, "app.log"),
 		os.O_CREATE|os.O_WRONLY|os.O_TRUNC,
 		0o644)
 	if err != nil {

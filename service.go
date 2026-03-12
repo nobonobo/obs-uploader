@@ -75,10 +75,13 @@ func (s *AppService) openWindow(id string, prof Profile, output string) {
 }
 
 // GetFieldDef returns the expected dynamic form fields.
-func (s *AppService) GetInfo(id string) Info {
+func (s *AppService) GetInfo(id string) *Info {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.windows[id].Info
+	if w, ok := s.windows[id]; ok {
+		return &w.Info
+	}
+	return nil
 }
 
 // Upload receives the dynamic form data and processes it.
@@ -111,10 +114,12 @@ func (s *AppService) Upload(id string, data map[string]any) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.windows[id].window != nil {
-		s.windows[id].window.Close()
+	if w, ok := s.windows[id]; ok {
+		if w.window != nil {
+			w.window.Close()
+		}
+		delete(s.windows, id)
 	}
-	delete(s.windows, id)
 }
 
 // Cancel closes the window entirely instead of uploading.
@@ -122,9 +127,10 @@ func (s *AppService) Cancel(id string) {
 	slog.Info("Cancel called")
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if s.windows[id].window != nil {
-		s.windows[id].window.Close()
+	if w, ok := s.windows[id]; ok {
+		if w.window != nil {
+			w.window.Close()
+		}
+		delete(s.windows, id)
 	}
-	delete(s.windows, id)
 }
-
