@@ -20,10 +20,18 @@ type Field struct {
 
 type FieldDef []Field
 
+type Mode int
+
+const (
+	ModeRecording Mode = iota
+	ModeLive
+)
+
 type Profile struct {
 	Name        string   `json:"name"`
 	Template    string   `json:"template"`
 	MinDuration float64  `json:"min-duration"`
+	Mode        Mode     `json:"mode"`
 	Fields      FieldDef `json:"fields"`
 }
 
@@ -52,7 +60,7 @@ func init() {
 		slog.Error("failed to get user cache dir", "error", err)
 		os.Exit(1)
 	}
-	cache = filepath.Join(cache, "obs-recorder")
+	cache = filepath.Join(cache, "obs-uploader")
 	if err := os.MkdirAll(cache, 0755); err != nil {
 		slog.Error("failed to create cache dir", "error", err)
 		os.Exit(1)

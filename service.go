@@ -48,7 +48,7 @@ func (s *AppService) ServiceStartup(ctx context.Context, options application.Ser
 func (s *AppService) openWindow(id string, prof Profile, output string) {
 	app := application.Get()
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title: "OBS Recorder",
+		Title: "OBS Uploader",
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,
@@ -105,13 +105,16 @@ func (s *AppService) Upload(id string, data map[string]any) {
 	if runtime.GOOS == "windows" {
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	}
-	if output, err := cmd.CombinedOutput(); err != nil {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
 		msg := fmt.Sprintf("Error: %s\n\n%s", err.Error(), strings.TrimSpace(string(output)))
+		slog.Error("Upload failed", "error", err, "output", output)
 		app := application.Get()
 		errDialog := app.Dialog.Error().SetTitle("Upload Failed").SetMessage(msg)
 		errDialog.Show()
 		return
 	}
+	slog.Info("Upload successful", "output", output)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if w, ok := s.windows[id]; ok {

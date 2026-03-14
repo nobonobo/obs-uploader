@@ -19,7 +19,7 @@ func main() {
 	defer cancel()
 	core := New()
 	app := application.New(application.Options{
-		Name:        "obs-recorder",
+		Name:        "obs-uploader",
 		Description: "A demo of using raw HTML & CSS",
 		Services: []application.Service{
 			application.NewService(core.Service()),

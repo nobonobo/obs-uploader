@@ -6,7 +6,7 @@
     Cancel,
   } from "../bindings/github.com/nobonobo/obs-uploader/appservice.js";
 
-  /** @type {import("../bindings/github.com/nobonobo/obs-recorder/models.js").Fields} */
+  /** @type {import("../bindings/github.com/nobonobo/obs-uploader/models.js").Fields} */
   const id = new URLSearchParams(location.search).get("id");
   let info = {};
   let fields = [];
